@@ -4,397 +4,189 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ClassSense — Autonomous Classroom Monitoring & Assistance Robot</title>
-  <meta name="description" content="ClassSense is an autonomous classroom monitoring and assistance robot that detects noise hotspots, navigates safely, and supports discipline using non-intrusive feedback." />
+  <meta name="description" content="ClassSense is an autonomous classroom monitoring and assistance robot that detects noise hotspots, avoids obstacles, and visualizes activity using a web heatmap." />
 
   <style>
     :root{
-      --bg0:#050713;
-      --bg1:#070A18;
-      --panel:#0E1430;
-      --panel2:#0B1128;
+      --bg:#070A18;
+      --panel:#0F1736;
       --text:#EAF0FF;
       --muted:#A8B2D6;
-      --line:rgba(255,255,255,.10);
-      --line2:rgba(255,255,255,.07);
+      --line: rgba(255,255,255,.10);
       --accent:#7C5CFF;
       --accent2:#22D3EE;
-      --accent3:#34D399;
-      --shadow: 0 18px 50px rgba(0,0,0,.38);
-      --r:18px;
-      --r2:24px;
+      --shadow: 0 14px 40px rgba(0,0,0,.35);
+      --r:16px;
       --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
     }
 
     *{box-sizing:border-box}
-    html,body{height:100%}
     body{
       margin:0;
       font-family:var(--sans);
       color:var(--text);
       background:
-        radial-gradient(1100px 700px at 15% -10%, rgba(124,92,255,.32), transparent 58%),
-        radial-gradient(900px 650px at 90% 10%, rgba(34,211,238,.18), transparent 56%),
-        radial-gradient(900px 650px at 50% 110%, rgba(52,211,153,.10), transparent 62%),
-        linear-gradient(180deg, var(--bg0), var(--bg1) 55%, var(--bg0));
+        radial-gradient(900px 600px at 15% -10%, rgba(124,92,255,.22), transparent 58%),
+        radial-gradient(900px 600px at 90% 10%, rgba(34,211,238,.12), transparent 56%),
+        linear-gradient(180deg, #050713, var(--bg));
       overflow-x:hidden;
     }
 
-    a{color:inherit}
-    .wrap{max-width:1120px; margin:0 auto; padding:22px 18px 84px;}
+    a{color:inherit; text-decoration:none}
 
-    /* Top Nav */
     .nav{
-      position:sticky;
-      top:0;
-      z-index:50;
-      backdrop-filter: blur(12px);
-      background: rgba(5,7,19,.70);
-      border-bottom: 1px solid rgba(255,255,255,.08);
+      position:sticky; top:0; z-index:20;
+      background: rgba(5,7,19,.92);
+      border-bottom:1px solid rgba(255,255,255,.08);
     }
     .nav-inner{
-      max-width:1120px;
+      max-width:1050px;
       margin:0 auto;
-      padding:12px 18px;
+      padding:12px 16px;
       display:flex;
-      gap:14px;
       align-items:center;
       justify-content:space-between;
-    }
-    .brand{
-      display:flex;
       gap:12px;
-      align-items:center;
-      min-width:240px;
     }
-    .logo{
-      width:38px; height:38px;
-      border-radius:14px;
-      background: linear-gradient(135deg, rgba(124,92,255,1), rgba(34,211,238,1));
-      box-shadow: 0 16px 30px rgba(124,92,255,.20);
-      position:relative;
-      flex:0 0 auto;
-    }
-    .logo:after{
-      content:"";
-      position:absolute;
-      inset:10px;
-      border-radius:12px;
-      background: rgba(5,7,19,.65);
-      border:1px solid rgba(255,255,255,.14);
-    }
-    .brand-title{display:flex; flex-direction:column; gap:2px}
-    .brand-title .name{font-weight:850; letter-spacing:.2px; font-size:13.5px}
-    .brand-title .course{color:var(--muted); font-size:12px}
-
-    .links{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      justify-content:flex-end;
-      align-items:center;
-    }
+    .brand{font-weight:800; letter-spacing:.2px}
+    .brand small{display:block; font-weight:500; color:var(--muted); margin-top:2px}
+    .links{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end}
     .links a{
-      text-decoration:none;
-      font-size:12.5px;
       color:var(--muted);
-      padding:8px 10px;
-      border-radius:999px;
       border:1px solid rgba(255,255,255,.10);
-      background: rgba(14,20,48,.35);
-      transition: transform .15s ease, background .15s ease, color .15s ease;
+      background: rgba(15,23,54,.55);
+      padding:7px 10px;
+      border-radius:999px;
+      font-size:12.5px;
     }
-    .links a:hover{
-      transform: translateY(-1px);
-      background: rgba(14,20,48,.70);
-      color:var(--text);
+    .links a:hover{color:var(--text); background: rgba(15,23,54,.85)}
+
+    .wrap{max-width:1050px; margin:0 auto; padding:22px 16px 70px}
+    .card{
+      background: var(--panel);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      padding:18px;
+      overflow:hidden;
     }
 
-    /* Layout */
     .hero{
       display:grid;
       grid-template-columns: 1.2fr .8fr;
       gap:14px;
-      padding:18px 0 6px;
     }
-    @media (max-width: 940px){
-      .hero{grid-template-columns:1fr}
-      .brand{min-width:auto}
-    }
+    @media (max-width: 900px){ .hero{grid-template-columns:1fr} }
 
-    .card{
-      background: linear-gradient(180deg, rgba(14,20,48,.92), rgba(11,17,40,.78));
-      border:1px solid rgba(255,255,255,.10);
-      border-radius: var(--r2);
-      box-shadow: var(--shadow);
-      padding:18px;
-    }
+    h1{margin:0 0 10px; font-size:38px; line-height:1.05}
+    h2{margin:0; font-size:16px; letter-spacing:.2px}
+    p{margin:0}
+    .muted{color:var(--muted); line-height:1.65}
 
-    .hero h1{
-      margin:0 0 10px;
-      font-size:40px;
-      line-height:1.05;
-      letter-spacing:.2px;
-    }
-    .subtitle{
-      margin:0;
-      color:var(--muted);
-      line-height:1.65;
-      font-size:15px;
-      max-width:70ch;
-    }
-
-    .cta{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-top:14px;
-    }
+    .cta{margin-top:14px; display:flex; gap:10px; flex-wrap:wrap}
     .btn{
       display:inline-flex;
       align-items:center;
-      gap:10px;
       padding:10px 12px;
-      border-radius:14px;
+      border-radius:12px;
       border:1px solid rgba(255,255,255,.12);
-      background: rgba(14,20,48,.55);
-      text-decoration:none;
-      font-weight:750;
+      background: rgba(255,255,255,.04);
+      font-weight:700;
       font-size:14px;
-      transition: transform .15s ease, background .15s ease, border-color .15s ease, filter .15s ease;
-      user-select:none;
-    }
-    .btn:hover{
-      transform:translateY(-1px);
-      background: rgba(14,20,48,.85);
-      border-color: rgba(255,255,255,.18);
     }
     .btn.primary{
-      background: linear-gradient(135deg, rgba(124,92,255,.95), rgba(34,211,238,.55));
+      background: linear-gradient(135deg, rgba(124,92,255,.92), rgba(34,211,238,.42));
       border-color: rgba(255,255,255,.16);
     }
-    .btn.primary:hover{filter:brightness(1.05)}
 
-    .chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px}
-    .chip{
-      font-size:12px;
-      padding:6px 10px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(14,20,48,.40);
-      color:var(--text);
-    }
-    .chip strong{font-weight:850}
-
-    .grid{
-      display:grid;
-      gap:14px;
-      grid-template-columns: repeat(12, 1fr);
-      margin-top:14px;
-    }
+    .grid{display:grid; grid-template-columns: repeat(12, 1fr); gap:14px; margin-top:14px}
     .span-12{grid-column: span 12}
-    .span-8{grid-column: span 8}
     .span-6{grid-column: span 6}
     .span-4{grid-column: span 4}
-    @media (max-width: 940px){
-      .span-8,.span-6,.span-4{grid-column: span 12}
-    }
+    .span-8{grid-column: span 8}
+    @media (max-width: 900px){ .span-6,.span-4,.span-8{grid-column: span 12} }
 
-    .section{scroll-margin-top:88px}
-    .section-title{
-      display:flex;
-      align-items:baseline;
-      justify-content:space-between;
-      gap:12px;
-      margin:0 0 10px;
+    .head{
+      display:flex; align-items:baseline; justify-content:space-between; gap:12px;
+      margin-bottom:10px;
     }
-    .section-title h2{
-      margin:0;
-      font-size:16px;
-      letter-spacing:.25px;
-    }
-    .meta{
-      color:var(--muted);
-      font-size:12px;
-    }
+    .meta{color:var(--muted); font-size:12px}
 
-    .list{
-      margin:0;
-      padding-left:18px;
-      color:var(--muted);
-      line-height:1.78;
-      font-size:14px;
-    }
-
-    .kpis{
-      display:grid;
-      gap:12px;
-      grid-template-columns: 1fr 1fr;
-    }
-    @media (max-width: 940px){
-      .kpis{grid-template-columns:1fr}
-    }
-    .kpi{
-      background: rgba(5,7,19,.30);
-      border:1px solid rgba(255,255,255,.10);
-      border-radius: var(--r);
-      padding:14px;
-      height:100%;
-    }
-    .kpi .label{
-      color:var(--muted);
-      font-size:12px;
-      text-transform:uppercase;
-      letter-spacing:.35px;
-    }
-    .kpi .value{
-      font-size:18px;
-      font-weight:900;
-      margin-top:6px;
-    }
-    .kpi .hint{
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.55;
-      margin-top:6px;
-    }
+    .list{margin:0; padding-left:18px; color:var(--muted); line-height:1.75}
+    .two-col{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+    @media (max-width: 900px){ .two-col{grid-template-columns:1fr} }
 
     .table{
       width:100%;
       border-collapse: collapse;
+      border-radius: 14px;
       overflow:hidden;
-      border-radius: var(--r);
       border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.12);
     }
-    .table th, .table td{
+    .table th,.table td{
       padding:10px 12px;
       border-bottom:1px solid rgba(255,255,255,.08);
-      font-size:13.5px;
       color:var(--muted);
+      font-size:13.5px;
       vertical-align:top;
     }
     .table th{
-      text-align:left;
       color:var(--text);
       font-size:12px;
-      letter-spacing:.35px;
       text-transform:uppercase;
-      background: rgba(14,20,48,.55);
+      letter-spacing:.3px;
+      background: rgba(255,255,255,.04);
+      text-align:left;
     }
     .table tr:last-child td{border-bottom:none}
 
     .code{
       font-family:var(--mono);
       font-size:12.5px;
-      color:var(--text);
-      background: rgba(5,7,19,.45);
+      background: rgba(0,0,0,.18);
       border:1px solid rgba(255,255,255,.10);
-      border-radius: var(--r);
+      border-radius:14px;
       padding:12px;
       overflow:auto;
       white-space:pre;
     }
 
-    .two-col{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:12px;
-    }
-    @media (max-width: 940px){
-      .two-col{grid-template-columns:1fr}
-    }
-
-    .hr{
-      height:1px;
-      background: rgba(255,255,255,.08);
-      margin:14px 0;
-    }
-
-    .note{
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(14,20,48,.35);
-      border-radius: var(--r);
-      padding:12px;
-      color:var(--muted);
-      font-size:13.5px;
-      line-height:1.55;
-    }
-
-    .footer{
-      margin-top:22px;
-      padding-top:16px;
-      border-top:1px solid rgba(255,255,255,.10);
-      color:var(--muted);
-      font-size:13px;
-      display:flex;
-      justify-content:space-between;
-      gap:12px;
-      flex-wrap:wrap;
-    }
-
-    /* Heatmap demo (front-end visual) */
     .heatmap{
       display:grid;
       grid-template-columns: repeat(4, 1fr);
       gap:10px;
-      margin-top:10px;
+      margin-top:12px;
     }
     .cell{
-      border-radius:14px;
       border:1px solid rgba(255,255,255,.10);
-      background: rgba(5,7,19,.35);
+      border-radius:14px;
       padding:10px;
-      min-height:66px;
+      background: rgba(0,0,0,.14);
+      min-height:64px;
       display:flex;
       flex-direction:column;
       justify-content:space-between;
-      transition: transform .15s ease, border-color .15s ease, background .15s ease;
     }
-    .cell:hover{
-      transform: translateY(-1px);
-      border-color: rgba(255,255,255,.16);
-      background: rgba(14,20,48,.45);
-    }
-    .cell .id{
-      font-size:12px;
+    .cell .id{color:var(--muted); font-size:12px}
+    .cell .score{font-family:var(--mono); font-size:12.5px}
+    .cell.quiet{border-color: rgba(34,211,238,.22)}
+    .cell.noisy{border-color: rgba(124,92,255,.28)}
+
+    .footer{
+      margin-top:18px;
+      padding-top:14px;
+      border-top:1px solid rgba(255,255,255,.10);
       color:var(--muted);
-      letter-spacing:.25px;
-    }
-    .cell .score{
-      font-family:var(--mono);
-      font-size:12.5px;
-      color:var(--text);
-      opacity:.95;
-    }
-    .cell.quiet{
-      background: linear-gradient(180deg, rgba(52,211,153,.18), rgba(5,7,19,.35));
-      border-color: rgba(52,211,153,.22);
-    }
-    .cell.noisy{
-      background: linear-gradient(180deg, rgba(124,92,255,.22), rgba(5,7,19,.35));
-      border-color: rgba(124,92,255,.26);
+      font-size:13px;
+      display:flex;
+      gap:12px;
+      justify-content:space-between;
+      flex-wrap:wrap;
     }
 
-    /* Small badges */
-    .badge{
-      display:inline-flex;
-      align-items:center;
-      gap:10px;
-      padding:8px 10px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(14,20,48,.35);
-      color:var(--text);
-      font-size:12.5px;
-      width:max-content;
-    }
-    .glowline{
-      height:2px;
-      width:52px;
-      border-radius:999px;
-      background: linear-gradient(90deg, rgba(124,92,255,0), rgba(124,92,255,1), rgba(34,211,238,1), rgba(34,211,238,0));
-      opacity:.9;
-    }
+    section{scroll-margin-top:86px}
   </style>
 </head>
 
@@ -402,23 +194,17 @@
   <div class="nav">
     <div class="nav-inner">
       <div class="brand">
-        <div class="logo" aria-hidden="true"></div>
-        <div class="brand-title">
-          <div class="name">ClassSense</div>
-          <div class="course">22AIE214 — Introduction to AI Robotics</div>
-        </div>
+        ClassSense
+        <small>22AIE214 — Introduction to AI Robotics</small>
       </div>
-
-      <div class="links" aria-label="Section navigation">
+      <div class="links">
         <a href="#problem">Problem</a>
         <a href="#solution">Solution</a>
         <a href="#architecture">Architecture</a>
-        <a href="#methodology">Methodology</a>
+        <a href="#methodology">Method</a>
         <a href="#heatmap">Heatmap</a>
-        <a href="#hardware">Hardware</a>
         <a href="#demo">Demo</a>
         <a href="#team">Team</a>
-        <a href="#references">References</a>
       </div>
     </div>
   </div>
@@ -426,139 +212,90 @@
   <div class="wrap">
     <section class="hero">
       <div class="card">
-        <div class="badge">
-          <span>Autonomous Classroom Monitoring and Assistance Robot</span>
-          <span class="glowline" aria-hidden="true"></span>
-        </div>
-
         <h1>ClassSense</h1>
-        <p class="subtitle">
-          ClassSense is an autonomous classroom-support robot designed to monitor noise levels, detect distraction hotspots,
-          navigate safely with obstacle avoidance, and visualize noisy and quiet zones through a web-based heatmap.
-          The robot provides non-intrusive behavioral feedback using an onboard OLED display and motion toward noisy regions.
+        <p class="muted">
+          An Autonomous Classroom Monitoring and Assistance Robot.
+          The robot patrols within a defined area, monitors noise levels, detects hotspots, avoids obstacles,
+          and visualizes activity using a web-based 4×4 heatmap. It provides non-intrusive feedback using an OLED display.
         </p>
-
         <div class="cta">
-          <a class="btn primary" href="#demo">View Demo Interface</a>
-          <a class="btn" href="#architecture">System Architecture</a>
+          <a class="btn primary" href="#demo">Demo Interface</a>
           <a class="btn" href="#methodology">Working Method</a>
-        </div>
-
-        <div class="chips" aria-label="Key highlights">
-          <span class="chip"><strong>Controller:</strong> ESP32 DevKit</span>
-          <span class="chip"><strong>Sensing:</strong> MAX9814 + HC-SR04</span>
-          <span class="chip"><strong>Drive:</strong> Differential drive</span>
-          <span class="chip"><strong>Driver:</strong> TB6612FNG</span>
-          <span class="chip"><strong>Display:</strong> 1.3 inch SH1106 OLED</span>
-          <span class="chip"><strong>Interface:</strong> WiFi hotspot + web dashboard</span>
+          <a class="btn" href="#architecture">Architecture</a>
         </div>
       </div>
 
       <div class="card">
-        <div class="section-title" style="margin-top:0">
-          <h2>Project Snapshot</h2>
-          <div class="meta">Status overview</div>
-        </div>
-
-        <div class="kpis">
-          <div class="kpi">
-            <div class="label">Operating Area</div>
-            <div class="value">100 cm × 100 cm</div>
-            <div class="hint">Area divided into 16 grid cells of 25 cm × 25 cm for heatmap scoring.</div>
-          </div>
-          <div class="kpi">
-            <div class="label">Noise Logic</div>
-            <div class="value">Hotspot Detection</div>
-            <div class="hint">Threshold-based detection with direction finding via rotation scanning.</div>
-          </div>
-          <div class="kpi">
-            <div class="label">Safety</div>
-            <div class="value">Obstacle Avoidance</div>
-            <div class="hint">Reactive avoidance using ultrasonic distance sensing and side checks.</div>
-          </div>
-          <div class="kpi">
-            <div class="label">Visualization</div>
-            <div class="value">Web Heatmap</div>
-            <div class="hint">Live dashboard with start/stop control and OLED text control.</div>
-          </div>
-        </div>
-
-        <div class="hr"></div>
-        <div class="note">
-          This site is a project showcase page. You can add real photos, wiring diagrams, and test videos later in the Gallery section.
-        </div>
-      </div>
-    </section>
-
-    <section id="problem" class="grid section">
-      <div class="span-8 card">
-        <div class="section-title">
-          <h2>Problem Statement</h2>
-          <div class="meta">Why this project matters</div>
-        </div>
-        <p class="subtitle" style="max-width:none">
-          In classroom environments, noise can increase when teachers are focused on instruction and cannot continuously monitor
-          every region of the room. This reduces attention, increases distractions, and adds extra workload to maintain discipline.
-          A supportive autonomous system can monitor the environment, identify noisy regions, and encourage quiet behavior without
-          interrupting the lesson.
-        </p>
-      </div>
-
-      <div class="span-4 card">
-        <div class="section-title">
-          <h2>Design Goals</h2>
-          <div class="meta">What ClassSense targets</div>
+        <div class="head">
+          <h2>Quick Summary</h2>
+          <div class="meta">Key points</div>
         </div>
         <ul class="list">
-          <li>Real-time noise monitoring and hotspot identification</li>
-          <li>Safe indoor navigation with obstacle avoidance</li>
-          <li>Non-intrusive student feedback through motion and OLED messages</li>
-          <li>Web-based heatmap visualization and simple controls</li>
+          <li>Controller: ESP32 DevKit</li>
+          <li>Sensors: MAX9814 microphone, HC-SR04 ultrasonic</li>
+          <li>Drive: Differential drive using TB6612FNG and two DC motors</li>
+          <li>Display: 1.3 inch SH1106 OLED</li>
+          <li>Interface: WiFi hotspot with web dashboard and heatmap</li>
+          <li>Operating area: 100 cm × 100 cm, divided into 16 cells</li>
         </ul>
       </div>
     </section>
 
-    <section id="solution" class="grid section">
-      <div class="span-12 card">
-        <div class="section-title">
-          <h2>Proposed Solution</h2>
-          <div class="meta">What the robot does</div>
+    <section id="problem" class="grid">
+      <div class="span-8 card">
+        <div class="head">
+          <h2>Problem Statement</h2>
+          <div class="meta">Why needed</div>
         </div>
+        <p class="muted">
+          During teaching, it is difficult to continuously monitor all regions of a classroom. Increased noise reduces student attention,
+          creates distractions, and increases the teacher’s workload. A supportive autonomous system can monitor the classroom environment
+          and encourage quieter behavior without interrupting instruction.
+        </p>
+      </div>
 
+      <div class="span-4 card">
+        <div class="head">
+          <h2>Objectives</h2>
+          <div class="meta">Project goals</div>
+        </div>
+        <ul class="list">
+          <li>Monitor noise levels in real time</li>
+          <li>Detect and approach noisy regions</li>
+          <li>Avoid obstacles while moving</li>
+          <li>Stay inside a defined boundary</li>
+          <li>Update a grid-based heatmap</li>
+          <li>Show reminders on OLED</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="solution" class="grid">
+      <div class="span-12 card">
+        <div class="head">
+          <h2>Proposed Solution</h2>
+          <div class="meta">What it does</div>
+        </div>
         <div class="two-col">
-          <div>
-            <p class="subtitle" style="max-width:none">
-              ClassSense patrols within a defined 100 cm × 100 cm area while continuously reading sound intensity and obstacle distance.
-              When noise crosses a defined threshold, the robot performs a direction-finding scan, rotates to face the loudest direction,
-              and moves toward the hotspot. The corresponding grid cell is marked on a web heatmap and the robot displays a reminder
-              message on the OLED screen.
-            </p>
-            <div class="chips">
-              <span class="chip"><strong>Behavior:</strong> Patrol and respond</span>
-              <span class="chip"><strong>Control:</strong> Hybrid (reactive + deliberate)</span>
-              <span class="chip"><strong>Interaction:</strong> OLED messages</span>
-            </div>
-          </div>
-
-          <div class="kpi">
-            <div class="label">Human Interaction</div>
-            <div class="value">Web Dashboard + OLED</div>
-            <div class="hint">
-              The ESP32 hosts a WiFi hotspot and serves a control page with start/stop and OLED text input,
-              along with a live heatmap indicating noisy and quiet zones.
-            </div>
-          </div>
+          <p class="muted">
+            The robot patrols inside a 100 cm × 100 cm area while continuously reading sound intensity and obstacle distance.
+            When the sound crosses a threshold, it performs a rotation scan to find the loudest direction, turns toward it,
+            moves toward the hotspot, updates the heatmap cell, and displays a reminder message on the OLED.
+          </p>
+          <p class="muted">
+            The system uses a hybrid control approach: reactive behaviors for obstacle avoidance and noise response,
+            and deliberate behaviors for patrol strategy, grid scoring, and boundary constraints.
+          </p>
         </div>
       </div>
     </section>
 
-    <section id="architecture" class="grid section">
+    <section id="architecture" class="grid">
       <div class="span-12 card">
-        <div class="section-title">
+        <div class="head">
           <h2>System Architecture</h2>
-          <div class="meta">Modules and data flow</div>
+          <div class="meta">Modules</div>
         </div>
-
         <table class="table" role="table" aria-label="System architecture table">
           <thead>
             <tr>
@@ -569,132 +306,78 @@
           </thead>
           <tbody>
             <tr>
-              <td><strong style="color:var(--text)">Sensing</strong></td>
-              <td>MAX9814 microphone, HC-SR04 ultrasonic</td>
-              <td>Measure sound intensity and detect obstacles for safe movement.</td>
+              <td>Sensor Input</td>
+              <td>MAX9814, HC-SR04</td>
+              <td>Noise intensity and obstacle distance sensing</td>
             </tr>
             <tr>
-              <td><strong style="color:var(--text)">Processing</strong></td>
+              <td>Processing</td>
               <td>ESP32 DevKit</td>
-              <td>Runs the navigation logic, hotspot detection, WiFi hotspot, and web server.</td>
+              <td>Decision making, WiFi hotspot, web server</td>
             </tr>
             <tr>
-              <td><strong style="color:var(--text)">Actuation</strong></td>
-              <td>TB6612FNG, 2 DC gear motors</td>
-              <td>Drives differential motion: forward, reverse, turning, and rotation scanning.</td>
+              <td>Motion</td>
+              <td>TB6612FNG, 2 DC motors</td>
+              <td>Differential drive movement and rotation scanning</td>
             </tr>
             <tr>
-              <td><strong style="color:var(--text)">Feedback</strong></td>
-              <td>1.3 inch SH1106 OLED</td>
-              <td>Displays reminders such as "Stay Quiet" and teacher-set messages.</td>
+              <td>Feedback</td>
+              <td>SH1106 OLED</td>
+              <td>Reminder display and teacher messages</td>
             </tr>
             <tr>
-              <td><strong style="color:var(--text)">Visualization</strong></td>
-              <td>ESP32 web dashboard</td>
-              <td>Shows a 4×4 heatmap, provides start/stop, and OLED text control.</td>
+              <td>Dashboard</td>
+              <td>ESP32 web UI</td>
+              <td>Start/stop control and heatmap visualization</td>
             </tr>
           </tbody>
         </table>
-
-        <div class="hr"></div>
-        <div class="code" aria-label="High-level flow">
-Perception (sound + distance)
-  -> Decision (patrol or hotspot response)
-    -> Motion command (differential drive)
-      -> Safety checks (obstacle + boundary)
-        -> Web heatmap update + OLED message
-        </div>
       </div>
     </section>
 
-    <section id="methodology" class="grid section">
+    <section id="methodology" class="grid">
       <div class="span-12 card">
-        <div class="section-title">
+        <div class="head">
           <h2>Working Methodology</h2>
-          <div class="meta">End-to-end operation</div>
+          <div class="meta">Steps</div>
         </div>
 
         <div class="two-col">
-          <div>
-            <ol class="list" style="padding-left:18px">
-              <li>Initialization: ESP32 starts the WiFi hotspot, launches the web interface, and shows a default OLED reminder.</li>
-              <li>Start command: The robot begins patrolling the defined area from the origin position.</li>
-              <li>Patrol mode: Continuous sampling of sound intensity and obstacle distance during movement.</li>
-              <li>Noise trigger: When sound crosses the threshold, the robot enters hotspot response mode.</li>
-              <li>Direction finding: The robot performs a full rotation scan and selects the direction with maximum sound.</li>
-              <li>Approach: The robot rotates to face the target direction and moves forward while monitoring safety constraints.</li>
-              <li>Obstacle avoidance: If an obstacle is within the minimum distance, the robot stops and chooses a safer side.</li>
-              <li>Boundary protection: The robot stays within the 100 cm × 100 cm boundary and ignores external noise sources.</li>
-              <li>Heatmap marking: The current grid cell is marked as noisy and scoring is updated on the dashboard.</li>
-              <li>Resume patrol: The robot returns to patrol immediately after marking the region.</li>
-            </ol>
-          </div>
+          <ol class="list" style="padding-left:18px">
+            <li>Initialize WiFi hotspot and OLED message</li>
+            <li>Wait for start command from web dashboard</li>
+            <li>Patrol and continuously sample sound and distance</li>
+            <li>When noise threshold is reached, rotate and find maximum sound direction</li>
+            <li>Move toward the hotspot while avoiding obstacles</li>
+            <li>Update the current heatmap cell score and mark noisy regions</li>
+            <li>Resume patrol</li>
+          </ol>
 
           <div>
-            <div class="kpi">
-              <div class="label">Key Thresholds</div>
-              <div class="value">Noise and distance triggers</div>
-              <div class="hint">Replace these numbers if your final calibration changes.</div>
-            </div>
-            <div class="hr"></div>
-            <div class="table" style="overflow:hidden" aria-label="Threshold table wrapper">
-              <table class="table" role="table" aria-label="Threshold table">
-                <thead>
-                  <tr>
-                    <th>Condition</th>
-                    <th>Threshold</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Quiet region</td>
-                    <td>sound below 700</td>
-                    <td>Increase quiet score in the current cell</td>
-                  </tr>
-                  <tr>
-                    <td>Noise detected</td>
-                    <td>sound at or above 1200</td>
-                    <td>Rotate scan and move toward the loudest direction</td>
-                  </tr>
-                  <tr>
-                    <td>Obstacle close</td>
-                    <td>distance below 20 cm</td>
-                    <td>Stop, scan sides, choose safer path or reverse and turn</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <div class="code" aria-label="Key parameters">
+Operating area: 100 cm × 100 cm
+Grid: 4 × 4 (each cell 25 cm × 25 cm)
 
-            <div class="hr"></div>
-            <div class="note">
-              Control paradigm: hybrid approach combining reactive responses (obstacle avoidance, noise trigger) with deliberate behavior
-              (patrol pattern, grid-based heatmap scoring, boundary rules).
+Quiet condition: sound below 700
+Noise condition: sound at or above 1200
+Obstacle condition: distance below 20 cm
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <section id="heatmap" class="grid section">
+    <section id="heatmap" class="grid">
       <div class="span-6 card">
-        <div class="section-title">
+        <div class="head">
           <h2>Heatmap Model</h2>
-          <div class="meta">4×4 grid scoring</div>
+          <div class="meta">Grid scoring</div>
         </div>
-        <p class="subtitle" style="max-width:none">
-          The classroom area is discretized into a 4×4 grid. Each cell maintains a score.
-          Positive scores represent quiet regions, while negative scores represent noisy regions.
-          When a hotspot is detected, the corresponding cell is updated and highlighted on the web interface.
+        <p class="muted">
+          The operating area is divided into a 4×4 grid. Each cell stores a score.
+          Positive scores represent quieter regions and negative scores represent noisier regions.
         </p>
-
-        <div class="hr"></div>
-        <div class="code" aria-label="Grid definition">
-Area: 100 cm × 100 cm
-Cells: 4 × 4 (16 total)
-Cell size: 25 cm × 25 cm
-
-Cell IDs:
+        <div class="code" aria-label="Grid IDs" style="margin-top:12px">
 A1 A2 A3 A4
 B1 B2 B3 B4
 C1 C2 C3 C4
@@ -703,114 +386,33 @@ D1 D2 D3 D4
       </div>
 
       <div class="span-6 card">
-        <div class="section-title">
+        <div class="head">
           <h2>Heatmap Preview</h2>
-          <div class="meta">Front-end demonstration</div>
+          <div class="meta">Example layout</div>
         </div>
-        <p class="subtitle" style="max-width:none">
-          This preview is a visual example. Your actual ESP32 dashboard can show real-time scores and a live hotspot indicator.
-        </p>
-
-        <div class="heatmap" id="heatmapGrid" aria-label="Heatmap grid">
-          <!-- filled by JS -->
-        </div>
-
-        <div class="hr"></div>
-        <div class="note">
-          Cells are styled based on score sign: quiet (positive) and noisy (negative).
-          You can later replace this preview with screenshots from your ESP32 web page.
-        </div>
+        <p class="muted">This is an example preview. The real dashboard displays live updates.</p>
+        <div class="heatmap" id="heatmapGrid" aria-label="Heatmap grid"></div>
       </div>
     </section>
 
-    <section id="hardware" class="grid section">
+    <section id="demo" class="grid">
       <div class="span-12 card">
-        <div class="section-title">
-          <h2>Hardware and Power</h2>
-          <div class="meta">Build components</div>
-        </div>
-
-        <div class="two-col">
-          <div>
-            <ul class="list">
-              <li>ESP32 DevKit microcontroller for sensing, control logic, WiFi hotspot, and web hosting</li>
-              <li>MAX9814 microphone module for analog sound intensity detection</li>
-              <li>HC-SR04 ultrasonic sensor for obstacle detection</li>
-              <li>TB6612FNG motor driver for dual motor control</li>
-              <li>Two DC gear motors for differential drive movement</li>
-              <li>1.3 inch SH1106 OLED display for non-verbal reminders and teacher messages</li>
-            </ul>
-
-            <div class="hr"></div>
-            <div class="note">
-              Power separation: ESP32 powered via USB; motors powered via 4 AA batteries to reduce resets caused by motor noise.
-            </div>
-          </div>
-
-          <div>
-            <table class="table" role="table" aria-label="Power table">
-              <thead>
-                <tr>
-                  <th>Subsystem</th>
-                  <th>Power Source</th>
-                  <th>Reason</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>ESP32 + sensors + OLED</td>
-                  <td>USB power</td>
-                  <td>Stable supply for reliable sensing and WiFi hosting</td>
-                </tr>
-                <tr>
-                  <td>Motors</td>
-                  <td>4 AA batteries</td>
-                  <td>Isolates motor current spikes and electrical noise</td>
-                </tr>
-              </tbody>
-            </table>
-
-            <div class="hr"></div>
-            <div class="code" aria-label="Connections placeholder">
-Connections and pin mapping:
-Add your latest pin map here once finalized.
-If you paste your exact GPIO connections, this section can be updated into a neat table.
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="demo" class="grid section">
-      <div class="span-12 card">
-        <div class="section-title">
+        <div class="head">
           <h2>Demo Interface</h2>
-          <div class="meta">WiFi hotspot and dashboard</div>
+          <div class="meta">WiFi dashboard</div>
         </div>
-
         <div class="two-col">
           <div>
-            <p class="subtitle" style="max-width:none">
-              ClassSense hosts a local WiFi hotspot and serves a control page for basic operation. The dashboard supports robot start/stop,
-              OLED text control, and live heatmap visualization.
+            <p class="muted">
+              The ESP32 hosts a local WiFi hotspot and serves a dashboard for robot control.
+              The dashboard provides start/stop, OLED text control, and the heatmap visualization.
             </p>
-
-            <div class="hr"></div>
-            <div class="code" aria-label="WiFi details">
-WiFi hotspot:
+            <div class="code" style="margin-top:12px" aria-label="WiFi details">
 SSID: TeachersPet
 Password: 12345678
-
-Dashboard URL:
-192.168.4.1
-            </div>
-
-            <div class="hr"></div>
-            <div class="note">
-              If you later add screenshots of the web dashboard, place them in the Gallery section or replace the preview blocks.
+Dashboard URL: 192.168.4.1
             </div>
           </div>
-
           <div>
             <table class="table" role="table" aria-label="Dashboard features">
               <thead>
@@ -820,41 +422,22 @@ Dashboard URL:
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>Start</td>
-                  <td>Begins patrol from the initial position and enables monitoring.</td>
-                </tr>
-                <tr>
-                  <td>Stop</td>
-                  <td>Stops motion safely and pauses monitoring.</td>
-                </tr>
-                <tr>
-                  <td>OLED Text</td>
-                  <td>Allows the teacher to send a message to the OLED display.</td>
-                </tr>
-                <tr>
-                  <td>Heatmap</td>
-                  <td>Shows the classroom grid and highlights noisy regions.</td>
-                </tr>
+                <tr><td>Start</td><td>Begins patrol and monitoring</td></tr>
+                <tr><td>Stop</td><td>Stops motion safely</td></tr>
+                <tr><td>OLED Text</td><td>Sends a message to the OLED display</td></tr>
+                <tr><td>Heatmap</td><td>Shows the 4×4 classroom grid</td></tr>
               </tbody>
             </table>
-
-            <div class="hr"></div>
-            <div class="kpi">
-              <div class="label">Default OLED message</div>
-              <div class="value" style="font-family:var(--mono); font-size:16px">STAY QUIET</div>
-              <div class="hint">Message can be changed via the dashboard text input.</div>
-            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <section id="team" class="grid section">
-      <div class="span-6 card">
-        <div class="section-title">
+    <section id="team" class="grid">
+      <div class="span-12 card">
+        <div class="head">
           <h2>Team</h2>
-          <div class="meta">Project authors</div>
+          <div class="meta">Authors</div>
         </div>
         <table class="table" role="table" aria-label="Team table">
           <thead>
@@ -875,77 +458,30 @@ Dashboard URL:
           </tbody>
         </table>
 
-        <div class="hr"></div>
-        <div class="note">
-          Course: 22AIE214 — Introduction to AI Robotics
-        </div>
-      </div>
-
-      <div class="span-6 card">
-        <div class="section-title">
-          <h2>Gallery</h2>
-          <div class="meta">Add real media here</div>
-        </div>
-        <p class="subtitle" style="max-width:none">
-          Add photos of the robot build, wiring, and a screenshot of the ESP32 dashboard. If you have a short demo video,
-          place a link here or embed it later.
-        </p>
-
-        <div class="hr"></div>
-        <div class="code" aria-label="Gallery placeholder">
-Suggested items:
-1) Robot top view photo
-2) Robot front view showing HC-SR04 and OLED
-3) Wiring and power separation photo
-4) Web dashboard screenshot showing heatmap
-5) Short demonstration clip link
+        <div class="footer">
+          <div>ClassSense — Autonomous Classroom Monitoring and Assistance Robot</div>
+          <div>22AIE214 — Introduction to AI Robotics</div>
         </div>
       </div>
     </section>
-
-    <section id="references" class="grid section">
-      <div class="span-12 card">
-        <div class="section-title">
-          <h2>References</h2>
-          <div class="meta">Add your sources</div>
-        </div>
-        <ul class="list">
-          <li>Add robotics textbook or lecture references used for differential drive and kinematics.</li>
-          <li>Add documentation links for ESP32, MAX9814 microphone module, HC-SR04, TB6612FNG, and SH1106 OLED.</li>
-          <li>Add any research papers or articles used for classroom monitoring or service robotics design.</li>
-        </ul>
-        <div class="hr"></div>
-        <div class="note">
-          Tip: Keep references consistent in one style (IEEE or APA) for a professional submission.
-        </div>
-      </div>
-    </section>
-
-    <div class="footer">
-      <div>ClassSense — Autonomous Classroom Monitoring and Assistance Robot</div>
-      <div>Prepared for 22AIE214 — Introduction to AI Robotics</div>
-    </div>
   </div>
 
   <script>
-    // Heatmap preview (front-end only). Replace with real values or screenshots later.
+    // Heatmap preview (example values)
     const cells = [
       ["A1",  3], ["A2",  2], ["A3", -1], ["A4",  1],
       ["B1",  4], ["B2",  1], ["B3",  0], ["B4", -2],
       ["C1",  2], ["C2",  0], ["C3",  1], ["C4",  3],
-      ["D1", -1], ["D2",  1], ["D3",  2], ["D4",  4],
+      ["D1", -1], ["D2",  1], ["D3",  2], ["D4",  4]
     ];
 
     const grid = document.getElementById("heatmapGrid");
-    cells.forEach(([id, score]) => {
-      const div = document.createElement("div");
-      div.className = "cell " + (score < 0 ? "noisy" : (score > 0 ? "quiet" : ""));
-      div.innerHTML = `
-        <div class="id">${id}</div>
-        <div class="score">score: ${score}</div>
-      `;
-      grid.appendChild(div);
-    });
+    for (const [id, score] of cells){
+      const cell = document.createElement("div");
+      cell.className = "cell " + (score < 0 ? "noisy" : (score > 0 ? "quiet" : ""));
+      cell.innerHTML = `<div class="id">${id}</div><div class="score">score: ${score}</div>`;
+      grid.appendChild(cell);
+    }
   </script>
 </body>
 </html>
